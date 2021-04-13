@@ -20,7 +20,8 @@ int Sum(int a, int b) {
 
 int main() {
 	using namespace std::chrono_literals;
-
+	// create a nested scope to observe the destructor of ThreadPool
+	// being invoked
 	{
 		ThreadPool pool;
 
@@ -29,6 +30,7 @@ int main() {
 		vector<std::future<int>> sums;
 		vector<std::future<int>> products;
 
+		// initialize arguments and submit tasks to the thread pool
 		for (int i = 0; i < TEST_SIZE; i++) {
 			args1[i] = i + 1;
 			args2[i] = i + 1;
@@ -40,12 +42,14 @@ int main() {
 
 		debug("Submitted tasks");
 
+		// consume results
 		for (int i = 0; i < TEST_SIZE; i++) {
 			debug(args1[i], " + ", args2[i], " = ", sums[i].get());
 			debug(args1[i], " * ", args2[i], " = ", products[i].get());
 		}
 		debug("After result, wait 3s");
 
+		// adding a wait so that all threads finish their tasks
 		std::this_thread::sleep_for(3s);
 
 		debug("Destroying thread pool");
@@ -55,5 +59,3 @@ int main() {
 	getchar();
 	return 0;
 }
-
-

@@ -15,9 +15,10 @@ using namespace std;
 
 static std::mutex m;
 
+// To print debug logs in thread-safe manner
 template <typename ... Args>
 void debug(Args ... args) {
-	// binary left folding expression
+	// C++17 binary left folding expression
 	// (init op ... op pack)
 	std::lock_guard<std::mutex> lg{m};
 	(cout << ... << args);

@@ -7,6 +7,7 @@
 #include <mutex>
 #include <condition_variable>
 
+// A thread safe queue implementaiton
 template <typename T>
 class safe_queue {
 private:
