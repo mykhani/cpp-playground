@@ -117,9 +117,11 @@ Hashing applications:
 #include <type_traits>
 #include <iostream>
 #include <stdexcept>
+#include <experimental/optional>
 
+using std::experimental::optional;
+using std::experimental::nullopt;
 using namespace std;
-
 /* 
  Drawbacks of using direct address table
   * array size could be very large
@@ -167,72 +169,53 @@ public:
 
 // multiple implementations of open-addressing:
 // * linear probing - linearly search for the next empty spot after a collision is detected
-// * quadratic probing
+// * quadratic probing - next probed position is the square of the collision.
+//                       e.g if collision happens at position cur, then for 1st, 2nd and 3rd collision,
+//                       probed positions are next cur + 1, cur + 4, cur + 9
+//                       or hash(cur, i) for i >=1, cur + i^2
 // * double hashing
+
+enum class SlotStatus {
+	EMPTY,
+	OCCUPIED,
+	DELETED
+};
 
 template <typename Key>
 class HashTableOpenAddressing {
 protected:
-	vector<Key> values;
 	int slots;
+	vector<Key> values;
+	vector<SlotStatus> slotStatus;
 
 public:
-	HashTableOpenAddressing(int _slots) : values(_slots, Key{}), slots{_slots} {}
+	HashTableOpenAddressing(int _slots) : slots{_slots}, values(_slots, Key{}), slotStatus(_slots, SlotStatus::EMPTY) {}
 
-	virtual void insert(Key key) = 0;
-	virtual void remove(Key key) = 0;
-	virtual bool search(Key key) = 0;
+	int hash(Key k);
+	void insert(Key key);
+	void remove(Key key);
+	bool search(Key key);
+
+	virtual int probe(int cur, optional<Key> key = nullopt) = 0;
 
 	virtual ~HashTableOpenAddressing() = default;
 };
 
-
-// Linear probing
-// problem with linear probing is clusters
-// to spread out these clusters, use quadratic probing (instead of searching consecutive
-// positions, search every next, fourth, 9th i.e i^2 element
-// The disadvantage of quadratic probing is that it might miss empty
-// slots even if they are available
-// Mathematically, it has been proven that to not skip any empty
-// slots using quadratic probing,
-// if load factor < 0.5 and number of slots m is a prime number, only
-// then quadratic probing guarantees that it won't skip any empty slots
-// lf = entries / m; so m should be > double the entries for quadratic
-// probing to work
-// quadratic probing also has secondary clusters but it is still better than
-// clusters using linear probing
-template <typename Key>
-class HashTableOpenAddressingLinearProbing : public HashTableOpenAddressing<Key> {
-
-	enum class SlotStatus {
-		EMPTY,
-		OCCUPIED,
-		DELETED
-	};
-
-private:
-	vector<SlotStatus> slotStatus;
-public:
-	int hash(Key k);
-	int findEmptyOrDeleted(int begin);
-	int findOccupied(int begin, Key k);
-
-	HashTableOpenAddressingLinearProbing(int _slots)
-		: HashTableOpenAddressing<Key>(_slots), slotStatus(_slots, SlotStatus::EMPTY)  {}
-
-	~HashTableOpenAddressingLinearProbing() = default;
-
-	void insert(Key key) override;
-	void remove(Key key) override;
-	bool search(Key key) override;
-};
+template<typename Key>
+inline int HashTableOpenAddressing<Key>::hash(Key k) {
+	// TODO: check if Key type is int
+//	return k % HashTableOpenAddressing<Key>::slots;
+	// slots is not detected without this-> prefix
+	// see https://stackoverflow.com/questions/1120833/derived-template-class-access-to-base-class-member-data
+	return k % this->slots;
+}
 
 template<typename Key>
-inline void HashTableOpenAddressingLinearProbing<Key>::insert(Key key) {
+inline void HashTableOpenAddressing<Key>::insert(Key key) {
 	int slot = hash(key);
 
 	if (slotStatus[slot] == SlotStatus::OCCUPIED) {
-		slot = findEmptyOrDeleted(slot + 1);
+		slot = probe(slot); // linear or quadratic probing
 	}
 
 	if (slot >= 0) {
@@ -242,77 +225,154 @@ inline void HashTableOpenAddressingLinearProbing<Key>::insert(Key key) {
 }
 
 template<typename Key>
-inline void HashTableOpenAddressingLinearProbing<Key>::remove(Key key) {
+inline void HashTableOpenAddressing<Key>::remove(Key key) {
 	int slot = hash(key);
 
+	// if empty then return
 	if (this->slotStatus[slot] == SlotStatus::EMPTY)
 		return;
 
 	// OCCUPIED or DELETED
-	if (this->values[slot] != key) {
-		slot = findOccupied(slot + 1, key);
+	if (this->values[slot] == key) {
+		this->slotStatus[slot] = SlotStatus::DELETED;
+		return;
 	}
 
+	slot = probe(slot, key);
 	if (slot >= 0) {
 		this->slotStatus[slot] = SlotStatus::DELETED;
 	}
 }
 
 template<typename Key>
-inline int HashTableOpenAddressingLinearProbing<Key>::hash(Key k) {
-	// TODO: check if Key type is int
-//	return k % HashTableOpenAddressing<Key>::slots;
-	// slots is not detected without this-> prefix
-	// see https://stackoverflow.com/questions/1120833/derived-template-class-access-to-base-class-member-data
-	return k % this->slots;
-}
-
-template<typename Key>
-inline int HashTableOpenAddressingLinearProbing<Key>::findEmptyOrDeleted(int begin) {
-	for (int i = 0; i < this->slots; i++) { // circular search
-		int index = (begin + i) % this->slots;
-		if (slotStatus[index] == SlotStatus::EMPTY || slotStatus[index] == SlotStatus::DELETED)
-			return index;
-	}
-	return -1;
-}
-
-template<typename Key>
-inline int HashTableOpenAddressingLinearProbing<Key>::findOccupied(int begin, Key k) {
-	for (int i = 0; i < this->slots; i++) { // circular search
-		int index = (begin + i) % this->slots;
-		// if an empty slot found no need to search further
-		if (this->slotStatus[index] == SlotStatus::EMPTY)
-			return -1;
-
-		if (this->values[index] == k) {
-			if (this->slotStatus[index] == SlotStatus::OCCUPIED) {
-				return index;
-			} else {
-				return -1;
-			}
-		}
-	}
-	return -1;
-}
-
-template<typename Key>
-inline bool HashTableOpenAddressingLinearProbing<Key>::search(Key key) {
+inline bool HashTableOpenAddressing<Key>::search(Key key) {
 	int slot = hash(key);
 
 	// return if the key doesn't exist at all
 	if (this->slotStatus[slot] == SlotStatus::EMPTY)
 		return false;
 
-	if (this->values[slot] == key) {
+	if (this->values[slot] == key && this->slotStatus[slot] != SlotStatus::DELETED) {
 		return true;
 	}
 
-	slot = findOccupied(slot + 1, key);
+	slot = probe(slot, key);
 	if (slot >= 0)
 		return true;
 
 	return false;
+}
+
+// Linear probing
+// problem with linear probing is clusters
+// to spread out these clusters, use quadratic probing (instead of searching consecutive
+// positions, search every next, fourth, 9th i.e i^2 element
+// The disadvantage of quadratic probing is that it might miss empty
+// slots even if they are available
+// Mathematically, it has been proven that to not skip any empty
+// slots using quadratic probing,s
+// if load factor < 0.5 and number of slots m is a prime number, only
+// then quadratic probing guarantees that it won't skip any empty slots
+// lf = entries / m; so m should be > double the entries for quadratic
+// probing to work
+// quadratic probing also has secondary clusters but it is still better than
+// clusters using linear probing
+template <typename Key>
+class HashTableOpenAddressingLinearProbing : public HashTableOpenAddressing<Key> {
+
+public:
+	virtual int probe(int cur, optional<Key> key = nullopt) override;
+
+	// inherit ctor
+	using HashTableOpenAddressing<Key>::HashTableOpenAddressing;
+
+};
+
+template<typename Key>
+inline int HashTableOpenAddressingLinearProbing<Key>::probe(int cur, optional<Key> key) {
+	//
+	int i = 1;
+	int pos = (cur + i) % this->slots;
+
+	// if we are searching for a key, terminate search when key is found or an empty slot is encountered
+	if (key) {
+		do {
+			if (this->slotStatus[pos] == SlotStatus::EMPTY)
+				return -1;
+
+			// Either occupied or deleted
+			if (this->values[pos] == *key)
+				if (this->slotStatus[pos] != SlotStatus::DELETED)
+					return pos;
+				else
+					break;
+
+			i++;
+			pos = (cur + i) % this->slots;
+		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != cur);
+	// we are looking for a free position
+	} else {
+		do {
+			pos = (cur + i) % this->slots;
+
+			if (this->slotStatus[pos] == SlotStatus::EMPTY || this->slotStatus[pos] == SlotStatus::DELETED)
+				return pos;
+
+			i++;
+			pos = (cur + i) % this->slots;
+		} while (pos != cur);
+	}
+
+	return -1;
+}
+
+template <typename Key>
+class HashTableOpenAddressingQuadraticProbing : public HashTableOpenAddressing<Key> {
+
+public:
+	virtual int probe(int cur, optional<Key> key = nullopt) override;
+
+	// inherit ctor
+	using HashTableOpenAddressing<Key>::HashTableOpenAddressing;
+
+};
+
+template<typename Key>
+inline int HashTableOpenAddressingQuadraticProbing<Key>::probe(int cur, optional<Key> key) {
+	//
+	int i = 1;
+	int pos = (cur + i*i) % this->slots;
+
+	// if we are searching for a key, terminate search when key is found or an empty slot is encountered
+	if (key) {
+		do {
+			if (this->slotStatus[pos] == SlotStatus::EMPTY)
+				return -1;
+
+			// Either occupied or deleted
+			if (this->values[pos] == *key)
+				if (this->slotStatus[pos] != SlotStatus::DELETED)
+					return pos;
+				else
+					break;
+
+			i++;
+			pos = (cur + i*i) % this->slots;
+		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != cur);
+	// we are looking for a free position
+	} else {
+		do {
+			pos = (cur + i) % this->slots;
+
+			if (this->slotStatus[pos] == SlotStatus::EMPTY || this->slotStatus[pos] == SlotStatus::DELETED)
+				return pos;
+
+			i++;
+			pos = (cur + i*i) % this->slots;
+		} while (pos != cur);
+	}
+
+	return -1;
 }
 
 #endif

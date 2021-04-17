@@ -63,12 +63,6 @@ void HashTableChaining::insert(int key) {
         newNode->next = (*head)->next;
         (*head)->next = newNode;
     }
-    
-//    cout << "key: " << index << endl;
-//    for (Node* iter = *head; iter; iter = iter->next) {
-//        cout << iter->val << " -> ";
-//    }
-//    cout << endl;
 }
 
 void HashTableChaining::remove(int key) {
