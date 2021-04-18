@@ -2,43 +2,43 @@
 #define HASHING_H
 
 /*
-Hashing mainly used to implement:
+ Hashing mainly used to implement:
  * Dictionaries (key - values)
  * Sets
-Hashing advantages:
-* Search O(1)
-* Insert O(1)
-* Delete O(1)
+ Hashing advantages:
+ * Search O(1)
+ * Insert O(1)
+ * Delete O(1)
 
-How does it compare with:
-Unsorted arrays:
-* Search O(n)
-* Insert O(1) // insert at end
-* Delete O(1) // just mark element as deleted (no need to adjust array)
+ How does it compare with:
+ Unsorted arrays:
+ * Search O(n)
+ * Insert O(1) // insert at end
+ * Delete O(1) // just mark element as deleted (no need to adjust array)
 
-Sorted arrays:
-* Search O(logn)
-* Insert O(n)
-* Delete O(n)
+ Sorted arrays:
+ * Search O(logn)
+ * Insert O(n)
+ * Delete O(n)
 
-Self balance binary search trees (AVL and RB)
-* Search O(logn)
-* Insert O(logn)
-* Delete O(logn)
+ Self balance binary search trees (AVL and RB)
+ * Search O(logn)
+ * Insert O(logn)
+ * Delete O(logn)
 
-* Hash table is good for finding exact match 
-* Not good for cases where:
-  * you need less than or greater than keys (use BST)
-  * you need elements as sorted (use BST)
+ * Hash table is good for finding exact match
+ * Not good for cases where:
+ * you need less than or greater than keys (use BST)
+ * you need elements as sorted (use BST)
 
-Hashing applications:
-* Dictionaries
-* Database indexing
-* Cryptography
-* Caches
-* Symbol table in compiler/interpreters
-* Routers
-* Getting data from databases
+ Hashing applications:
+ * Dictionaries
+ * Database indexing
+ * Cryptography
+ * Caches
+ * Symbol table in compiler/interpreters
+ * Routers
+ * Getting data from databases
 
  Hash function: convert a large value into a small value that can be
  used as an index
@@ -48,37 +48,37 @@ Hashing applications:
  * Should generate values from 0 to m - 1 where m is the size of hash table
  * Should be fast. O(1) for integers and O(len) for strings of length len
  * Should uniformly distribute large keys into hash table slots (to make sure each go into
-   its own slot. Difficult to achieve and there would be cases where different keys result
-   into a same hash value, which is called a collision.
-  
+ its own slot. Difficult to achieve and there would be cases where different keys result
+ into a same hash value, which is called a collision.
+
  Example hashing functions:
-  * hash(large_key) = large_key % m where m is the size of hash table. Ideally m is chosen
-    as a prime number (less common factors) close to the size of hash table. Other bad
-    value of m is 10^n e.g. 10^3. Here, the hash function only checks last 3 digits.
-    or m = 2^3, where it checks only last 3 bits in the binary representation
-     
-  * for strings, weighted sum: str = "abcd";
-    hash(str) = (str[0] * x^0 + str[1] * x^1 + str[2] * x^2....) % m;
-    where x can be any numbe e.g. x = 33;
-    
-    if simple sum is used i.e. sum ASCII values of all characters and then take modulo m,
-    there is a problem i.e. hash for "abcd" and "dcba" or any other permutation would be same.
-    That is why weighted sum is used.
-      
-  * universal hashing
-  You have a group of hash functions, and each time you pick one of them randomly.
-  There is no pattern of data for which it will not result in uniform distribution
+ * hash(large_key) = large_key % m where m is the size of hash table. Ideally m is chosen
+ as a prime number (less common factors) close to the size of hash table. Other bad
+ value of m is 10^n e.g. 10^3. Here, the hash function only checks last 3 digits.
+ or m = 2^3, where it checks only last 3 bits in the binary representation
+
+ * for strings, weighted sum: str = "abcd";
+ hash(str) = (str[0] * x^0 + str[1] * x^1 + str[2] * x^2....) % m;
+ where x can be any numbe e.g. x = 33;
+
+ if simple sum is used i.e. sum ASCII values of all characters and then take modulo m,
+ there is a problem i.e. hash for "abcd" and "dcba" or any other permutation would be same.
+ That is why weighted sum is used.
+
+ * universal hashing
+ You have a group of hash functions, and each time you pick one of them randomly.
+ There is no pattern of data for which it will not result in uniform distribution
 
  Hashing collisions:
  * If we know keys in advance, then we can use perfect hashing (advanced technique)
  * If we do not know keys in advance, then we use one of the following:
-   * Chaining // maintain an array of linkedlist. Each slot is a linkedlist
-     that contains collided keys
-   * Open Addressing:
-     * Linear probing
-     * Quadratic probing 
-     * Double hashing
-      
+ * Chaining // maintain an array of linkedlist. Each slot is a linkedlist
+ that contains collided keys
+ * Open Addressing:
+ * Linear probing
+ * Quadratic probing
+ * Double hashing
+
  Chaining Performance:
  m = number of slots in hash table
  n = number of keys to be inserted
@@ -97,70 +97,68 @@ Hashing applications:
  Expected time to insert/delete: O(1 + alpha)
 
  All the above works if the hashing function generates keys with uniform distribution
-  
+
  Options of datastructures to implement chaining
  * linkedlist   
-   * search O(l), insert/delete O(l)
-   * not cache friendly
-   * extra overhead for storing next pointers
-   
+ * search O(l), insert/delete O(l)
+ * not cache friendly
+ * extra overhead for storing next pointers
+
  * vector (Dynamic arrays)
-   * search O(l), insert O(l), delete O(l)
-   * cache friendly
-   
+ * search O(l), insert O(l), delete O(l)
+ * cache friendly
+
  * Self-balancing BST (AVL or RB)
-   * search O(logl), insert O(logl), delete O(logl)
-   * not cache friendly
+ * search O(logl), insert O(logl), delete O(logl)
+ * not cache friendly
  
-*/
+ */
 #include <vector>
 #include <type_traits>
 #include <iostream>
 #include <stdexcept>
-#include <experimental/optional>
 
-using std::experimental::optional;
-using std::experimental::nullopt;
 using namespace std;
 /* 
  Drawbacks of using direct address table
-  * array size could be very large
-  * doesn't work when keys are floating points or strings
-*/
+ * array size could be very large
+ * doesn't work when keys are floating points or strings
+ */
 class DirectAddressTable {
-    vector<bool> tbl;
-    int offset;
+	vector<bool> tbl;
+	int offset;
 public:
-    DirectAddressTable(int start, int end);
-    void insert(int key);
-    void remove(int key);
-    bool search(int key);
+	DirectAddressTable(int start, int end);
+	void insert(int key);
+	void remove(int key);
+	bool search(int key);
 };
 
 struct Node;
 
 struct Node {
-    int val;
-    Node* next{nullptr};
-    
-    Node(int _val) : val{_val} {
-        cout << "Creating node with val: " << val << endl;
-    }
-    ~Node() {
-        cout << "Deleting node with val: " << val << endl;
-    }
+	int val;
+	Node *next { nullptr };
+
+	Node(int _val) :
+			val { _val } {
+		cout << "Creating node with val: " << val << endl;
+	}
+	~Node() {
+		cout << "Deleting node with val: " << val << endl;
+	}
 };
 
 // Hashtable with chaining to handle collisions
 class HashTableChaining {
-    vector<Node *> buckets;
-    int bucketSize;
+	vector<Node*> buckets;
+	int bucketSize;
 public:
-    HashTableChaining(int _bucketSize);
-    ~HashTableChaining();
-    void insert(int key);
-    void remove(int key);
-    bool search(int key);
+	HashTableChaining(int _bucketSize);
+	~HashTableChaining();
+	void insert(int key);
+	void remove(int key);
+	bool search(int key);
 };
 
 // Open addressing is another method to handle collisions
@@ -176,12 +174,10 @@ public:
 // * double hashing
 
 enum class SlotStatus {
-	EMPTY,
-	OCCUPIED,
-	DELETED
+	EMPTY, OCCUPIED, DELETED
 };
 
-template <typename Key>
+template<typename Key>
 class HashTableOpenAddressing {
 protected:
 	int slots;
@@ -189,14 +185,17 @@ protected:
 	vector<SlotStatus> slotStatus;
 
 public:
-	HashTableOpenAddressing(int _slots) : slots{_slots}, values(_slots, Key{}), slotStatus(_slots, SlotStatus::EMPTY) {}
+	HashTableOpenAddressing(int _slots) :
+			slots { _slots }, values(_slots, Key { }), slotStatus(_slots,
+					SlotStatus::EMPTY) {
+	}
 
 	int hash(Key k);
 	void insert(Key key);
 	void remove(Key key);
 	bool search(Key key);
 
-	virtual int probe(int cur, optional<Key> key = nullopt) = 0;
+	virtual int probe(Key key, bool search = false) = 0;
 
 	virtual ~HashTableOpenAddressing() = default;
 };
@@ -212,11 +211,7 @@ inline int HashTableOpenAddressing<Key>::hash(Key k) {
 
 template<typename Key>
 inline void HashTableOpenAddressing<Key>::insert(Key key) {
-	int slot = hash(key);
-
-	if (slotStatus[slot] == SlotStatus::OCCUPIED) {
-		slot = probe(slot); // linear or quadratic probing
-	}
+	int slot = probe(key); // linear or quadratic probing
 
 	if (slot >= 0) {
 		this->values[slot] = key;
@@ -226,19 +221,8 @@ inline void HashTableOpenAddressing<Key>::insert(Key key) {
 
 template<typename Key>
 inline void HashTableOpenAddressing<Key>::remove(Key key) {
-	int slot = hash(key);
+	int slot = probe(key, true);
 
-	// if empty then return
-	if (this->slotStatus[slot] == SlotStatus::EMPTY)
-		return;
-
-	// OCCUPIED or DELETED
-	if (this->values[slot] == key) {
-		this->slotStatus[slot] = SlotStatus::DELETED;
-		return;
-	}
-
-	slot = probe(slot, key);
 	if (slot >= 0) {
 		this->slotStatus[slot] = SlotStatus::DELETED;
 	}
@@ -246,17 +230,8 @@ inline void HashTableOpenAddressing<Key>::remove(Key key) {
 
 template<typename Key>
 inline bool HashTableOpenAddressing<Key>::search(Key key) {
-	int slot = hash(key);
+	int slot = probe(key, true);
 
-	// return if the key doesn't exist at all
-	if (this->slotStatus[slot] == SlotStatus::EMPTY)
-		return false;
-
-	if (this->values[slot] == key && this->slotStatus[slot] != SlotStatus::DELETED) {
-		return true;
-	}
-
-	slot = probe(slot, key);
 	if (slot >= 0)
 		return true;
 
@@ -277,11 +252,11 @@ inline bool HashTableOpenAddressing<Key>::search(Key key) {
 // probing to work
 // quadratic probing also has secondary clusters but it is still better than
 // clusters using linear probing
-template <typename Key>
-class HashTableOpenAddressingLinearProbing : public HashTableOpenAddressing<Key> {
+template<typename Key>
+class HashTableOpenAddressingLinearProbing: public HashTableOpenAddressing<Key> {
 
 public:
-	virtual int probe(int cur, optional<Key> key = nullopt) override;
+	virtual int probe(Key key, bool search = false) override;
 
 	// inherit ctor
 	using HashTableOpenAddressing<Key>::HashTableOpenAddressing;
@@ -289,48 +264,53 @@ public:
 };
 
 template<typename Key>
-inline int HashTableOpenAddressingLinearProbing<Key>::probe(int cur, optional<Key> key) {
+inline int HashTableOpenAddressingLinearProbing<Key>::probe(Key key,
+		bool search) {
 	//
-	int i = 1;
-	int pos = (cur + i) % this->slots;
+	int i = 0;
+	int start = this->hash(key);
+	int pos = start + i;
 
 	// if we are searching for a key, terminate search when key is found or an empty slot is encountered
-	if (key) {
+	if (search) {
 		do {
 			if (this->slotStatus[pos] == SlotStatus::EMPTY)
 				return -1;
 
 			// Either occupied or deleted
-			if (this->values[pos] == *key)
-				if (this->slotStatus[pos] != SlotStatus::DELETED)
+			if (this->values[pos] == key) {
+				if (this->slotStatus[pos] != SlotStatus::DELETED) {
 					return pos;
-				else
-					break;
+				} else {
+					return -1;
+				}
+			}
 
 			i++;
-			pos = (cur + i) % this->slots;
-		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != cur);
-	// we are looking for a free position
+			pos = (start + i) % this->slots;
+
+		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != start);
+	// we are looking for a free position (empty or deleted)
 	} else {
 		do {
-			pos = (cur + i) % this->slots;
-
-			if (this->slotStatus[pos] == SlotStatus::EMPTY || this->slotStatus[pos] == SlotStatus::DELETED)
+			if (this->slotStatus[pos] == SlotStatus::EMPTY
+					|| this->slotStatus[pos] == SlotStatus::DELETED) {
 				return pos;
+			}
 
 			i++;
-			pos = (cur + i) % this->slots;
-		} while (pos != cur);
+			pos = (start + i) % this->slots;
+
+		} while (pos != start);
 	}
 
 	return -1;
 }
 
-template <typename Key>
-class HashTableOpenAddressingQuadraticProbing : public HashTableOpenAddressing<Key> {
-
+template<typename Key>
+class HashTableOpenAddressingQuadraticProbing: public HashTableOpenAddressing<Key> {
 public:
-	virtual int probe(int cur, optional<Key> key = nullopt) override;
+	virtual int probe(Key key, bool search = false) override;
 
 	// inherit ctor
 	using HashTableOpenAddressing<Key>::HashTableOpenAddressing;
@@ -338,38 +318,44 @@ public:
 };
 
 template<typename Key>
-inline int HashTableOpenAddressingQuadraticProbing<Key>::probe(int cur, optional<Key> key) {
+inline int HashTableOpenAddressingQuadraticProbing<Key>::probe(Key key,
+		bool search) {
 	//
-	int i = 1;
-	int pos = (cur + i*i) % this->slots;
+	int i = 0;
+	int start = this->hash(key);
+	int pos = start + i;
 
 	// if we are searching for a key, terminate search when key is found or an empty slot is encountered
-	if (key) {
+	if (search) {
 		do {
-			if (this->slotStatus[pos] == SlotStatus::EMPTY)
+			if (this->slotStatus[pos] == SlotStatus::EMPTY) {
 				return -1;
-
+			}
 			// Either occupied or deleted
-			if (this->values[pos] == *key)
-				if (this->slotStatus[pos] != SlotStatus::DELETED)
+			if (this->values[pos] == key) {
+				if (this->slotStatus[pos] != SlotStatus::DELETED) {
 					return pos;
-				else
-					break;
+				} else {
+					return -1;
+				}
+			}
 
 			i++;
-			pos = (cur + i*i) % this->slots;
-		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != cur);
+			pos = (start + i * i) % this->slots;
+
+		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != start);
 	// we are looking for a free position
 	} else {
 		do {
-			pos = (cur + i) % this->slots;
-
-			if (this->slotStatus[pos] == SlotStatus::EMPTY || this->slotStatus[pos] == SlotStatus::DELETED)
+			if (this->slotStatus[pos] == SlotStatus::EMPTY
+					|| this->slotStatus[pos] == SlotStatus::DELETED) {
 				return pos;
+			}
 
 			i++;
-			pos = (cur + i*i) % this->slots;
-		} while (pos != cur);
+			pos = (start + i * i) % this->slots;
+
+		} while (pos != start);
 	}
 
 	return -1;

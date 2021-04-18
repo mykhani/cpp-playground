@@ -943,6 +943,9 @@ int main() {
 	hashTblLinear.insert(50);
 	hashTblLinear.insert(55);
 	hashTblLinear.insert(53);
+	hashTblLinear.insert(52);
+	hashTblLinear.insert(54);
+	hashTblLinear.insert(56);
 
 	cout << "Searching for 48: " << hashTblLinear.search(48) << endl;
 	cout << "Searching for 42: " << hashTblLinear.search(42) << endl;
@@ -958,6 +961,9 @@ int main() {
 	hashTblQuadratic.insert(50);
 	hashTblQuadratic.insert(55);
 	hashTblQuadratic.insert(53);
+	hashTblQuadratic.insert(52);
+	hashTblQuadratic.insert(54);
+	hashTblQuadratic.insert(56);
 
 	cout << "Searching for 48: " << hashTblQuadratic.search(48) << endl;
 	cout << "Searching for 42: " << hashTblQuadratic.search(42) << endl;
