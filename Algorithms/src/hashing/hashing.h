@@ -1,6 +1,12 @@
 #ifndef HASHING_H
 #define HASHING_H
 
+#include <utility>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <algorithm>
 /*
  Hashing mainly used to implement:
  * Dictionaries (key - values)
@@ -183,12 +189,12 @@ protected:
 	int slots;
 	vector<Key> values;
 	vector<SlotStatus> slotStatus;
+	int used = 0;
 
 public:
 	HashTableOpenAddressing(int _slots) :
-			slots { _slots }, values(_slots, Key { }), slotStatus(_slots,
-					SlotStatus::EMPTY) {
-	}
+			slots { _slots }, values(_slots, Key { }),
+			slotStatus(_slots, SlotStatus::EMPTY), used {0} {}
 
 	int hash(Key k);
 	void insert(Key key);
@@ -211,11 +217,15 @@ inline int HashTableOpenAddressing<Key>::hash(Key k) {
 
 template<typename Key>
 inline void HashTableOpenAddressing<Key>::insert(Key key) {
+	if (this->used == this->slots)
+		return;
+
 	int slot = probe(key); // linear or quadratic probing
 
 	if (slot >= 0) {
 		this->values[slot] = key;
 		this->slotStatus[slot] = SlotStatus::OCCUPIED;
+		this->used++;
 	}
 }
 
@@ -225,6 +235,7 @@ inline void HashTableOpenAddressing<Key>::remove(Key key) {
 
 	if (slot >= 0) {
 		this->slotStatus[slot] = SlotStatus::DELETED;
+		this->used--;
 	}
 }
 
@@ -290,13 +301,17 @@ inline int HashTableOpenAddressingLinearProbing<Key>::probe(Key key,
 			pos = (start + i) % this->slots;
 
 		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != start);
-	// we are looking for a free position (empty or deleted)
+		// we are looking for a free position (empty or deleted)
 	} else {
 		do {
 			if (this->slotStatus[pos] == SlotStatus::EMPTY
 					|| this->slotStatus[pos] == SlotStatus::DELETED) {
 				return pos;
 			}
+			// slot status occupied
+			// if key already exists, return
+			if (this->values[pos] == key)
+				return -1;
 
 			i++;
 			pos = (start + i) % this->slots;
@@ -308,7 +323,8 @@ inline int HashTableOpenAddressingLinearProbing<Key>::probe(Key key,
 }
 
 template<typename Key>
-class HashTableOpenAddressingQuadraticProbing: public HashTableOpenAddressing<Key> {
+class HashTableOpenAddressingQuadraticProbing: public HashTableOpenAddressing<
+		Key> {
 public:
 	virtual int probe(Key key, bool search = false) override;
 
@@ -344,7 +360,7 @@ inline int HashTableOpenAddressingQuadraticProbing<Key>::probe(Key key,
 			pos = (start + i * i) % this->slots;
 
 		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != start);
-	// we are looking for a free position
+		// we are looking for a free position
 	} else {
 		do {
 			if (this->slotStatus[pos] == SlotStatus::EMPTY
@@ -361,4 +377,137 @@ inline int HashTableOpenAddressingQuadraticProbing<Key>::probe(Key key,
 	return -1;
 }
 
+template<typename Key>
+class HashTableOpenAddressingDoubleHashing: public HashTableOpenAddressing<Key> {
+public:
+	virtual int probe(Key key, bool search = false) override;
+	int hash2(Key k);
+	// inherit ctor
+	using HashTableOpenAddressing<Key>::HashTableOpenAddressing;
+
+};
+
+template<typename Key>
+inline int HashTableOpenAddressingDoubleHashing<Key>::hash2(Key k) {
+	// Goal is to return an offset value that is prime with respect to
+	// total slots. Since by design we chose the value of total slots
+	// to be a prime number, I guess any number less than total slots
+	// should do the job.
+	// TODO: verify this assumption
+	int offset = this->slots - 1;
+	// hash2 function should never return 0 to
+	// prevent looping probing at same position forever)
+
+	// k % offset return values in the range
+	// [0 ... offset - 1]
+
+	// the below expression converts that range to values from
+	// [offset ... 1]
+	return offset - (k % offset);
+}
+
+template<typename Key>
+inline int HashTableOpenAddressingDoubleHashing<Key>::probe(Key key,
+		bool search) {
+	//
+	int i = 0;
+	int start = this->hash(key);
+	int offset = this->hash2(key);
+	// the return value of offset or hash2(key) should be prime with
+	// respect to total slots i.e. it must not be divisible by total slots
+	// Lets say total slots = 7 and offset = 4 and start = 0
+	// (0 * 4) % 7 = 0
+	// (1 * 4) % 7 = 4
+	// (2 * 4) % 7 = 1
+	// (3 * 4) % 7 = 5
+	// (4 * 4) % 7 = 2
+	// (5 * 4) % 7 = 6
+	// (6 * 4) % 7 = 3
+
+	// this makes the probe sequence kind of a pseudo random sequence
+	// for each collision, the sequence is generated based on the key (seed)
+
+	// this randomization prevents clustering
+	// i.e. not a fixed general formula same for all keys
+
+	// we can re-generate that sequence when we want to perform a lookup
+	// using key as the seed value
+
+	int pos = (start + i * offset) % this->slots; // initially pos = start for i = 0
+
+	// if we are searching for a key, terminate search when key is found or an empty slot is encountered
+	if (search) {
+		do {
+			if (this->slotStatus[pos] == SlotStatus::EMPTY) {
+				return -1;
+			}
+			// Either occupied or deleted
+			if (this->values[pos] == key) {
+				if (this->slotStatus[pos] != SlotStatus::DELETED) {
+					return pos;
+				} else {
+					return -1;
+				}
+			}
+
+			i++;
+			pos = (start + i * offset) % this->slots;
+
+		} while (this->slotStatus[pos] != SlotStatus::EMPTY && pos != start);
+		// we are looking for a free position
+	} else {
+		do {
+			if (this->slotStatus[pos] == SlotStatus::EMPTY
+					|| this->slotStatus[pos] == SlotStatus::DELETED) {
+				return pos;
+			}
+
+			i++;
+			pos = (start + i * offset) % this->slots;
+
+		} while (pos != start);
+	}
+
+	return -1;
+}
+
+// return the count of distinct elements
+int countDistinctElements(const vector<int>& vec);
+
+// return the frequency of elements
+vector<std::pair<int, int>> getFrequency(const vector<int>& vec);
+
+// intersection of two unsorted arrays
+vector<int> intersectionUnsorted(const vector<int>& a, const vector<int>& b);
+
+// union of two unsorted arrays
+vector<int> unionUnsorted(const vector<int>& a, const vector<int>& b);
+
+// find a pair with a given sum
+std::pair<int, int> findPairWithSumUnsorted(const vector<int>& vec, int sum);
+
+// see if a subarray with sum 0 exists
+bool subarrayWithZeroSumExists(const vector<int>& vec);
+
+// see if a subarray with a given sum exists
+bool subarrayWithSumExists(const vector<int>& vec, int sum);
+
+// return the starting and ending index of the maxmium subarray with the given sum
+std::pair<int, int> longestSubarrayWithSum(const vector<int>& vec, int sum);
+
+// return the starting and ending index of the longest subarray with equal number
+// of 0's and 1's
+std::pair<int, int> longestSubarrayWithEqualZeroesOnes(const vector<int>& vec);
+
+// return the longest common array with same sum in two arrays
+std::pair<int, int> longestCommonSubarrayWithGivenSum(const vector<int>& a, const vector<int>& b);
+
+// find the longest subsequence in the form x, x+1, x+2, ...x + i with these elements
+// appearing in any order
+vector<int> longsetSubsequence(const vector<int>& vec);
+
+// return a vector containing count of distinct elements per window
+std::vector<int> countDistinctElementsPerWindow(const vector<int>& vec, int k);
+
+std::vector<int> moreThanNByKOcurrences(const vector<int>& vec, int k);
 #endif
