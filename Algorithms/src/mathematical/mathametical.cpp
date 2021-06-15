@@ -66,7 +66,7 @@ int trailing_zeroes_in_factorial(int n)
     // so to find the numbers in factorial sequence, that hold a power of 5,5^2, 5^3, we can find the number of 5s, so
     int count = 0;
     
-    for (int divisor = 5; divisor < n; divisor *= 5) {
+    for (int divisor = 5; divisor <= n; divisor *= 5) {
         count += (n / divisor); // in first iteration find every 5th element, 25th in second and so on
     }
     
