@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <cstdint>
+#include <algorithm>
 
 #include "arrays/arrays.h"
 #include "bit-magic/bit-magic.h"
@@ -11,6 +12,11 @@
 #include "recursion/recursion.h"
 #include "searching/searching.h"
 #include "sorting/sorting.h"
+#include "tree/tree.h"
+#include "greedy/greedy.h"
+#include "binary-search-tree/binary-search-tree.h"
+
+#include <gtest/gtest.h>
 
 using namespace std;
 
@@ -35,15 +41,341 @@ std::ostream& operator<<(std::ostream &os, std::pair<int, int> p) {
 	return os;
 }
 
-int main() {
-	cout << "Digit count in 9235 is " << count_digits(9235) << endl;
-	cout << "Digit count in -9235 is " << count_digits(-9235) << endl;
-	cout << "Is 78987 palindrome? " << is_palindrome(78987) << endl;
-	cout << "Is 123 palindrome? " << is_palindrome(123) << endl;
-	cout << "Factorial of 10 is " << factorial(10) << endl;
-	cout << "Factorial of 0 is " << factorial(0) << endl;
-	cout << "Trailing zeroes in factorial(100) is "
-			<< trailing_zeroes_in_factorial(100) << endl;
+void fun(const TreeNode<int>& i) {
+	std::cout << i.key << " -> ";
+};
+
+
+TEST(Mathematical, CountDigitsTest) {
+    EXPECT_EQ(4, count_digits(9235));
+    EXPECT_EQ(4, count_digits(-9235));
+}
+
+TEST(Mathematical, PalindromeTest) {
+	EXPECT_EQ(true, is_palindrome(78987));
+	EXPECT_EQ(false, is_palindrome(123));
+}
+
+TEST(Mathematical, FactorialTest) {
+	EXPECT_EQ(1, factorial(0));
+	EXPECT_EQ(3628800, factorial(10));
+}
+
+TEST(Mathematical, TrailingZeroesFactorialTest) {
+	EXPECT_EQ(0, trailing_zeroes_in_factorial(1));
+	EXPECT_EQ(0, trailing_zeroes_in_factorial(0));
+	EXPECT_EQ(1, trailing_zeroes_in_factorial(5));
+	EXPECT_EQ(24, trailing_zeroes_in_factorial(100));
+}
+
+TEST(Mathematical, TemplateTest) {
+}
+
+TEST(Greedy, MinimumCoinsTest) {
+	std::vector<int> coins{5, 10, 2, 1};
+	int value = 52;
+
+	EXPECT_EQ(6, minimumCoins(coins, value));
+
+	coins = {18, 3, 5};
+	value = 20;
+	EXPECT_EQ(-1, minimumCoins(coins, value));
+}
+
+TEST(Greedy, MaximumActivitiesTest) {
+	std::vector<std::pair<int, int>> activities{
+		{3, 8},
+		{2, 4},
+		{1, 3},
+		{10, 11}
+	};
+
+	EXPECT_EQ(3, maximumActivities(activities));
+}
+
+TEST(Greedy, FractionalKnapsack) {
+	std::vector<std::pair<int, int>> items{
+		{50, 600},
+		{20, 500},
+		{30, 400}
+	};
+
+	int capacity = 70;
+
+	EXPECT_EQ(1140, fractionalKnapsack(items, capacity));
+
+	items = {
+			{10, 200},
+			{5, 50},
+			{20, 100}
+	};
+
+	capacity = 15;
+
+	EXPECT_EQ(250, fractionalKnapsack(items, capacity));
+}
+
+TEST(Greedy, JobSequencingTest) {
+	std::vector<std::pair<int, int>> jobs{
+		{4, 70},
+		{1, 80},
+		{1, 30},
+		{1, 100}
+	};
+
+	EXPECT_EQ(170, jobSequencing(jobs));
+
+	jobs = {
+		{4, 50},
+		{1, 5},
+		{1, 20},
+		{5, 10},
+		{5, 80}
+	};
+
+	EXPECT_EQ(160, jobSequencing(jobs));
+}
+
+TEST(Greedy, HuffmanTest) {
+	std::vector<std::pair<char, int>> f {
+		{'a', 10},
+		{'d', 50},
+		{'b', 20},
+		{'e', 40},
+		{'f', 80}
+	};
+
+	buildHuffmanTree(f);
+}
+
+TEST(Tree, BuildTreeInPreOrderTest) {
+	vector<int> inorder {40, 20, 60, 50, 70, 10, 80, 100, 30};
+	vector<int> preorder {10, 20, 40, 50, 60, 70, 30, 80, 100};
+
+	auto root = createTree(inorder, preorder);
+
+	vector<int> res_inorder;
+	vector<int> res_preorder;
+
+	//inOrderTraversal(root, std::function<void(const TreeNode<T>&)> fn)
+	inOrderTraversal(root, [&res_inorder](const TreeNode<int>& n) {
+		res_inorder.push_back(n.key);
+	});
+
+	//preOrderTraversal(root, std::function<void(const TreeNode<T>&)> fn)
+	preOrderTraversal(root, [&res_preorder](const TreeNode<int> &n) {
+		res_preorder.push_back(n.key);
+	});
+
+	EXPECT_EQ(std::equal(inorder.begin(), inorder.end(), res_inorder.begin()), true);
+	EXPECT_EQ(std::equal(preorder.begin(), preorder.end(), res_preorder.begin()), true);
+}
+
+TEST(Tree, SpiralTreeTraversalTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+	root->right->left->left = std::make_shared<TreeNode<int>>(60);
+	root->right->left->right = std::make_shared<TreeNode<int>>(70);
+	root->right->right->right = std::make_shared<TreeNode<int>>(80);
+
+	vector<int> result;
+	spiralTraversal(root, [&result](const int &n) {
+		result.push_back(n);
+	});
+
+	vector<int> expected {10, 30, 20, 40, 50, 80, 70, 60};
+
+	EXPECT_EQ(result == expected, true);
+}
+
+TEST(Tree, TreeDiameterTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+	root->right->left->left = std::make_shared<TreeNode<int>>(60);
+
+	int result = diameterOfTree(root);
+
+	EXPECT_EQ(5, result);
+}
+
+TEST(Tree, LowestCommonAncestorTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+
+	EXPECT_EQ(10, lowestCommonAncestor(root, 20, 50));
+}
+
+TEST(Tree, LowestCommonAncestorBetterTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+
+	auto result = lowestCommonAncestorBetter(root, 20, 50);
+	EXPECT_EQ(10, root->key);
+}
+
+TEST(Tree, CountNodesTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+
+	EXPECT_EQ(5, countNodes(root));
+
+}
+// countNodesCompleteTree(std::shared_ptr<TreeNode<T>> root)
+TEST(Tree, BurnTreeFromLeafTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->left->left = std::make_shared<TreeNode<int>>(40);
+	root->left->right = std::make_shared<TreeNode<int>>(50);
+	root->left->left->left = std::make_shared<TreeNode<int>>(60);
+	root->left->left->left->left = std::make_shared<TreeNode<int>>(70);
+
+	int result = burnTreeFromLeaf(root, 50);
+
+	EXPECT_EQ(result, 4);
+}
+
+
+TEST(Tree, TreeSerializeTest) {
+
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+
+	auto result = serializeTree(root);
+
+	vector<int> expected{10, 20, 0, 0, 30, 40, 0, 0, 50, 0, 0};
+
+	EXPECT_EQ(expected == result, true);
+}
+
+TEST(Tree, TreeDeserializeTest) {
+
+	vector<int> input{10, 20, 0, 0, 30, 40, 0, 0, 50, 0, 0};
+
+	auto root = deserializeTree(input);
+
+	auto output = serializeTree(root);
+
+	EXPECT_EQ(input == output, true);
+}
+
+TEST(Tree, InOrderTraversalIterativeTest) {
+	auto root = std::make_shared<TreeNode<int>>(10);
+	root->left = std::make_shared<TreeNode<int>>(20);
+	root->right = std::make_shared<TreeNode<int>>(30);
+	root->right->left = std::make_shared<TreeNode<int>>(40);
+	root->right->right = std::make_shared<TreeNode<int>>(50);
+
+	vector<int> expected{20, 10, 40, 30, 50};
+
+	auto result = inOrderTraversalIter(root);
+
+	EXPECT_EQ(result == expected, true);
+}
+
+TEST(BinarySearchTree, BSTInsertTest) {
+	BST bst;
+
+	bst.insert(20);
+	bst.insert(15);
+	bst.insert(30);
+	bst.insert(40);
+	bst.insert(50);
+	bst.insert(12);
+	bst.insert(18);
+	bst.insert(35);
+	bst.insert(80);
+	bst.insert(7);
+
+	auto result = inOrderTraversalIter(bst.getRoot());
+	vector<int> expected{7, 12, 15, 18, 20, 30, 35, 40, 50, 80};
+
+	EXPECT_EQ(result == expected, true);
+}
+
+TEST(BinarySearchTree, BSTInsertIterativeTest) {
+	BST bst;
+
+	bst.insertIter(20);
+	bst.insertIter(15);
+	bst.insertIter(30);
+	bst.insertIter(40);
+	bst.insertIter(50);
+	bst.insertIter(12);
+	bst.insertIter(18);
+	bst.insertIter(35);
+	bst.insertIter(80);
+	bst.insertIter(7);
+
+	auto result = inOrderTraversalIter(bst.getRoot());
+	vector<int> expected{7, 12, 15, 18, 20, 30, 35, 40, 50, 80};
+
+	EXPECT_EQ(result == expected, true);
+}
+
+TEST(BinarySearchTree, BSTSearchTest) {
+	BST bst;
+
+	bst.insert(20);
+	bst.insert(15);
+	bst.insert(30);
+	bst.insert(40);
+	bst.insert(50);
+	bst.insert(12);
+	bst.insert(18);
+	bst.insert(35);
+	bst.insert(80);
+	bst.insert(7);
+
+	EXPECT_EQ(bst.search(6), false);
+	EXPECT_EQ(bst.search(90), false);
+	EXPECT_EQ(bst.search(40), true);
+}
+
+TEST(BinarySearchTree, BSTSearchIterativeTest) {
+	BST bst;
+
+	bst.insert(20);
+	bst.insert(15);
+	bst.insert(30);
+	bst.insert(40);
+	bst.insert(50);
+	bst.insert(12);
+	bst.insert(18);
+	bst.insert(35);
+	bst.insert(80);
+	bst.insert(7);
+
+	EXPECT_EQ(bst.searchIter(6), false);
+	EXPECT_EQ(bst.searchIter(90), false);
+	EXPECT_EQ(bst.searchIter(40), true);
+}
+
+int main(int argc, char *argv[]) {
+
+	// initialize google test
+	testing::InitGoogleTest(&argc, argv);
+
+	RUN_ALL_TESTS();
+
 	cout << "GCD of 4 and 6 is " << find_gcd(4, 6) << endl;
 	cout << "LCM of 4 and 6 is " << find_lcm(4, 6) << endl;
 
@@ -771,9 +1103,29 @@ int main() {
 	cout << "Median of two sorted arrays: " << vec1 << " and " << vec2 << " is "
 			<< findMedianTwoSortedArrays(vec1, vec2) << endl;
 
+
+	vec1 = {1, 2, 4, 5, 3, 5};
+	cout << "The repeating element in " << vec1 << " is " << findRepeatingElement(vec1) << endl;
+
 	vec1 = { 0, 1, 2, 3, 4, 4 };
 	cout << "The repeating element in " << vec1 << " is "
 			<< findRepeatingElement(vec1) << endl;
+
+	vec1 = { 1, 2, 3, 4 };
+	k = 3;
+	cout << "Minimum number of pages in " << vec1 << " per " << k
+			<< " students is " << findMinimumPagesPerKStudents(vec1, k) << endl;
+
+	vec1 = { 10, 20, 30, 40 };
+	k = 2;
+	cout << "Minimum number of pages in " << vec1 << " per " << k
+			<< " students is " << findMinimumPagesPerKStudents(vec1, k) << endl;
+
+	vec1 = { 10, 20 };
+	k = 3;
+	cout << "Minimum number of pages in " << vec1 << " per " << k
+			<< " students is " << findMinimumPagesPerKStudents(vec1, k) << endl;
+
 
 	int arr[] = { 5, 4, 3, 2, 1 };
 	int arrSize = sizeof(arr) / sizeof(arr[0]);
@@ -1192,6 +1544,109 @@ int main() {
 
 		std::cout << "Elements with more than n/k occurrences in " << vec1
 				<< " are " << moreThanNByKOcurrences(vec1, k) << endl;
+	}
+
+	{
+//		auto fn = [](const TreeNode<int>& i) -> void {
+//			std::cout << i.key << " -> ";
+//		};
+
+
+		auto root = std::make_shared<TreeNode<int>>(10);
+		root->left = std::make_shared<TreeNode<int>>(20);
+		root->right = std::make_shared<TreeNode<int>>(30);
+		root->left->left = std::make_shared<TreeNode<int>>(40);
+		root->left->right = std::make_shared<TreeNode<int>>(50);
+		root->right->right = std::make_shared<TreeNode<int>>(70);
+		root->left->right->left = std::make_shared<TreeNode<int>>(70);
+		root->left->right->right = std::make_shared<TreeNode<int>>(80);
+
+		std::cout << "Inorder traversal" << endl;
+		inOrderTraversal(root, [](const TreeNode<int>& i) {
+			std::cout << i.key << " -> ";
+		});
+		std::cout << endl;
+
+		std::cout << "Preorder traversal" << endl;
+		preOrderTraversal(root, [](const TreeNode<int>& i) {
+			std::cout << i.key << " -> ";
+		});
+		std::cout << endl;
+
+		std::cout << "Preorder traversal Iterative" << endl;
+			preOrderTraversalIterative(root, [](const TreeNode<int>& i) {
+			std::cout << i.key << " -> ";
+		});
+
+		std::cout << endl;
+
+
+		std::cout << "Postorder traversal" << endl;
+		postOrderTraversal(root, [](const TreeNode<int>& i) -> void {
+			std::cout << i.key << " -> ";
+		});
+
+		std::cout << endl;
+
+		cout << "Tree height: " << heightOfTree(root) << endl;
+		cout << "Nodes at distance 1: " << nodesAtDistance(root, 2) << endl;
+		cout << "Breadth first traversal: " << endl;
+		breadthFirstTraversal(root, [](TreeNode<int>& n) {
+			cout << n << " -> ";
+		});
+
+		cout << endl;
+		cout << "Tree level order traversal line by line: " << endl;
+
+		levelOrderTraversalLineByLine(root);
+
+		cout << endl;
+		cout << "Size of tree: " << sizeOfTree(root) << endl;
+
+		cout << "Maxium value in binary tree: " << maxBinaryTree(root) << endl;
+
+		cout << "Left view of tree: " << getLeftView(root) << endl;
+		cout << "Left view of tree Iterative: " << getLeftViewIter(root) << endl;
+
+	}
+	{
+		// CSP when tree is empty
+		std::shared_ptr<TreeNode<int>> root{nullptr};
+		cout << "Children sum property: " << childrenSumProperty(root) << endl;
+
+		// CSP when tree has only one node
+		root = std::make_shared<TreeNode<int>>(3);
+		cout << "Children sum property: " << childrenSumProperty(root) << endl;
+
+		// CSP false for tree with multiple levels
+		root->left = std::make_shared<TreeNode<int>>(1);
+		root->right = std::make_shared<TreeNode<int>>(2);
+		root->right->left = std::make_shared<TreeNode<int>>(1);
+		root->right->right = std::make_shared<TreeNode<int>>(2);
+		cout << "Children sum property: " << childrenSumProperty(root) << endl;
+
+		// CSP true for tree with multiple levels
+		root = std::make_shared<TreeNode<int>>(20);
+		root->left = std::make_shared<TreeNode<int>>(8);
+		root->right = std::make_shared<TreeNode<int>>(12);
+		root->right->right = std::make_shared<TreeNode<int>>(30);
+//		root->right->right->right = std::make_shared<TreeNode<int>>(40);
+		root->left->left = std::make_shared<TreeNode<int>>(3);
+		root->left->right = std::make_shared<TreeNode<int>>(5);
+		cout << "Children sum property: " << childrenSumProperty(root) << endl;
+		cout << "Tree Balanced? : " << isTreeBalanced(root) << endl;
+		cout << "Max tree width: " << maxTreeWidth(root) << endl;
+
+		auto head = convertBinaryToDLL(root);
+		cout << "After conversion of tree to DLL: " << endl;
+		printBinaryDLL(head);
+	}
+
+	{
+		std::vector<int> coins{5, 10, 2, 1};
+		int value = 52;
+		cout << "Minimum coins in " << coins << " for value: " << value << " is "
+			 << minimumCoins(coins, value) << endl;
 	}
 
 	getchar();

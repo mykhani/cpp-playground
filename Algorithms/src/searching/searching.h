@@ -2,6 +2,7 @@
 #define SEARCHING_H
 
 #include <vector>
+#include <numeric>
 
 using namespace std;
 
@@ -67,5 +68,13 @@ bool findTripletPythagoras(vector<int> vec);
 // the above test shows that 0 <= max(arr) <= (n - 2) --> maximum possible value of max(arr) is
 // array size - 2, 1 minus for 0 starting element and 1 minus for one repeated (the least repetition always present). 
 int findRepeatingElement(vector<int> vec);
+
+// find the minimum number of pages that must be read by each student
+// A student can read only consecutive books and must finish reading a
+// book i.e. a book must be read by only single student and cannot be partially read
+// Note: if you find minimum for one student, it means some other student
+// might have to read more pages.
+// So the requirement is to minimize the maximum pages read by each student.
+int findMinimumPagesPerKStudents(vector<int> books, int k);
 
 #endif
