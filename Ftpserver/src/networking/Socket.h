@@ -5,16 +5,27 @@
  *      Author: ykhan
  */
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#ifndef NETWORKING_SOCKET_H_
+#define NETWORKING_SOCKET_H_
+
+#include <sys/socket.h>
+#include <experimental/optional>
+#include <stdexcept>
+#include "HostAddress.h"
+#include "Port.h"
+
+using std::experimental::optional;
+using std::experimental::nullopt;
 
 class Socket {
-protected:
+private:
 	int fd; // socket descriptor
 public:
+	Socket(int domain, int type, int protocol);
+	bool bind(Port port, optional<HostAddress> address = nullopt);
+
 	virtual void send() = 0;
 	virtual void recv() = 0;
-
 };
 
-#endif /* SOCKET_H_ */
+#endif /* NETWORKING_SOCKET_H_ */

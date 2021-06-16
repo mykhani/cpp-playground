@@ -5,19 +5,19 @@
  *      Author: ykhan
  */
 
-#ifndef HOSTADDRESS_H_
-#define HOSTADDRESS_H_
+#ifndef NETWORKING_HOSTADDRESS_H_
+#define NETWORKING_HOSTADDRESS_H_
 
 #include <string>
 
 class HostAddress {
 private:
-	std::string_view address;
+	std::string address;
 
 public:
-	HostAddress(const std::string_view& _address) : address{_address} {
+	HostAddress(std::string_view _address) :
+			address{_address} {
 	}
 };
 
-
-#endif /* HOSTADDRESS_H_ */
+#endif /* NETWORKING_HOSTADDRESS_H_ */
