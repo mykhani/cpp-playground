@@ -74,6 +74,7 @@ public:
 	T key; //
 	std::shared_ptr<TreeNode> left{nullptr};
 	std::shared_ptr<TreeNode> right{nullptr};
+	int lowerNodes{0};
 
 	TreeNode() = default;
 	TreeNode(const T& _key) :
