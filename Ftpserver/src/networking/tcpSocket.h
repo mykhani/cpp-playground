@@ -10,14 +10,15 @@
 
 #include <stdexcept>
 
-#include "Socket.h"
+#include "socket.h"
 
 class TcpSocket: public Socket {
 public:
-	TcpSocket() :
-			Socket{PF_INET, SOCK_STREAM, 0} {
-
-	}
+	TcpSocket();
+	TcpSocket(int fd);
+	TcpSocket(TcpSocket& other) = delete;
+	TcpSocket(TcpSocket&& other);
+	~TcpSocket();
 };
 
 #endif /* NETWORKING_TCPSOCKET_H_ */

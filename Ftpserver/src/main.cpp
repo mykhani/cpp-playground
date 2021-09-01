@@ -8,10 +8,13 @@
 #include <string>
 
 #include <memory>
-#include "networking/HostAddress.h"
-#include "networking/Port.h"
-#include "networking/TcpSocketServer.h"
-#include "networking/Connection.h"
+
+#include <thread>
+#include "networking/tcpSocket.h"
+#include "networking/connection.h"
+#include "networking/hostAddress.h"
+#include "networking/port.h"
+#include "networking/tcpSocketServer.h"
 
 using namespace std;
 
@@ -48,16 +51,36 @@ using namespace std;
  object.addEventListener(eventid, callback);
 
  */
-struct NewConnectionHandler: public EventCallback {
+void onNewConnection(EventPtr e) {
+	auto& conn_event = dynamic_cast<NewConnectionEvent&>(*e);
+	std::cout << "Thread id: " << this_thread::get_id() << " new Connection event received" << std::endl;
 
-	NewConnectionHandler() = default;
+	std::cout  << conn_event.connection;
+	TcpSocket& sock = conn_event.connection->getTcpSocket();
 
-	virtual void operator()(const Event& event) override {
-		const NewConnectionEvent& newConn = dynamic_cast<const NewConnectionEvent&>(event);
+	sock.asyncRecv([conn_event](Socket& sk, const string& msg) {
+		cout << "Received message on socket: " << sk.handle() << endl
+			 <<	msg << endl;
 
-		std::cout << "New Connection event received" << std::endl;
-	}
-};
+		string resp{R"MSG(
+HTTP/1.1 200 OK
+
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+	<body>
+		Hello from the webserver
+	</body>
+</html>
+)MSG"};
+		cout << "Sending response " << resp << endl;
+
+		write(sk, resp.c_str(), resp.length());
+		TcpSocketServer* server = conn_event.server;
+		server->closeConnection(conn_event.connection->getTcpSocket());
+	});
+}
 
 int main(int argc, char* argv[]) {
 
@@ -68,14 +91,11 @@ int main(int argc, char* argv[]) {
 
 	TcpSocketServer server{};
 
-	// server event handlers
+	server.addEventListener(TcpServerEvents::newConnection, onNewConnection);
 
-	std::shared_ptr<EventCallback> onNewConnection = make_shared<
-			NewConnectionHandler>();
-
-	server.addEventListener(newConnection, onNewConnection);
-
-	server.listen(Port{5555}, HostAddress{"localhost"}); // start listening in new background thread
+	cout << "Main thread id: " << this_thread::get_id() << endl;
+//	server.listen(Port{5555}, HostAddress{"localhost"}); // start listening in new background thread
+	server.listen(Port{9999}); // start listening in new background thread
 
 	getchar();
 

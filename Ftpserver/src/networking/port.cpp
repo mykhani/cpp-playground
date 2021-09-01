@@ -5,19 +5,28 @@
  *      Author: ykhan
  */
 
-#include "Port.h"
+#include "port.h"
+
+std::ostream& operator<<(std::ostream& os, const Port& port) {
+	os << port.port_num;
+	return os;
+}
 
 Port::Port(int i) :
-		portNum{i} {
+		port_num{i} {
 }
 
 Port::Port(std::string_view s) {
 	// TODO: verify the port string consists of only numbers
-	portNum = atoi(s.data());
+	port_num = atoi(s.data());
 }
 
 Port::operator int() {
-	return portNum;
+	return port_num;
+}
+
+Port::operator const char* () {
+	return std::to_string(port_num).c_str();
 }
 
 Port::~Port() {
