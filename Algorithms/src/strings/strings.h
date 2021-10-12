@@ -47,7 +47,8 @@
  * PREPROCESS TEXT O(n)
  */
 
-std::vector<std::pair<char, int>> frequencyOfCharactersLowercaseString(std::string s);
+std::vector<std::pair<char, int>> frequencyOfCharactersLowercaseString(
+		std::string s);
 
 // Time O(n), space O(1)
 bool isPalindrome(const std::string& s);
@@ -58,23 +59,47 @@ bool isPalindrome(const std::string& s);
 bool isSubsequence(const std::string& s1, const std::string& s2);
 
 // returns the first index of the substring found
-std::pair<int, int> findSubstring(const std::string& s, const std::string& pattern);
+std::pair<int, int> findSubstring(const std::string& s,
+		const std::string& pattern);
 
 // Return a list of indices matching the pattern
-std::vector<int> findPatternNaive(const std::string& text, const std::string& pattern);
+// Time O((n-m+1)*m), space O(1)
+std::vector<int> findPatternNaive(const std::string& text,
+		const std::string& pattern);
 
 // Return a list of indices matching the pattern which is distinct
 // Time O(n), space O(1)
-std::vector<int> findPatternDistinct(const std::string& text, const std::string& pattern);
+std::vector<int> findPatternDistinct(const std::string& text,
+		const std::string& pattern);
 
 // Return a list of indices matching the pattern
-std::vector<int> findPatternRabinCarp(const std::string& text, const std::string& pattern);
+// Time O(m*(n-m)), space O(1)
+std::vector<int> findPatternRabinCarp(const std::string& text,
+		const std::string& pattern);
+
+// Return a list of indices matching the pattern
+// Knuth-Morris-Prat algorithm (using lps array)
+// Time O(n), space O(m)
+std::vector<int> findPatternKMP(const std::string& text,
+		const std::string& pattern);
+
+// check if two strings are rotations of each other
+bool checkRotation(const std::string& s1, const std::string& s2);
 
 // two strings are anagrams if they are permutations of each other
 // and frequency of each character is also same
 // e.g silent and listen are anagrams
 // Time O(n), space O(1) // 256 chars
 bool isAnagram(const std::string& s1, const std::string& s2);
+
+// check if a pattern (or its permutation) exists inside the text (should be consecutive)
+// Time O(n), space O(1)
+bool anagramSearch(const std::string& text, const std::string& pattern);
+
+// find the lexicographic rank of a string
+// lexicographic rank: arrange the letters in ascending order,
+// the rank is the number of permutation that matches the string
+int lexicographicRank(const std::string& s);
 
 // index of leftmost repeating character in a string
 // Time O(n), space O(1)
@@ -88,16 +113,19 @@ std::string reverseWords(std::string s);
 /*
  * Longest prefix which is also suffix without any overlap
  * Input : aabcdaabc
-Output : 4
-The string "aabc" is the longest
-prefix which is also suffix.
+ Output : 4
+ The string "aabc" is the longest
+ prefix which is also suffix.
 
-Input : abcab
-Output : 2
+ Input : abcab
+ Output : 2
 
-Input : aaaa
-Output : 2
+ Input : aaaa
+ Output : 2
  */
+// see https://leetcode.com/problems/implement-strstr/discuss/13160/detailed-explanation-on-building-up-lps-for-kmp-algorithm
 int longestPrefixSuffix(std::string s);
 
+// find the length of longest substring with distinct characters
+int longestSubstringWithDistinctChars(const std::string& s);
 #endif /* STRINGS_STRINGS_H_ */

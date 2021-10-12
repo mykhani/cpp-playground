@@ -576,3 +576,46 @@ int findMinimumPagesPerKStudentsHelper(vector<int> books, int start, int k) {
 int findMinimumPagesPerKStudents(vector<int> books, int k) {
 	return findMinimumPagesPerKStudentsHelper(books, 0, k);
 }
+
+static int findStudentsRequired(vector<int> pages, int pagesPerStudent) {
+    int k = 1;
+    int sum = 0;
+    for (int i = 0; i < pages.size(); i++) {
+        if (sum + pages[i] > pagesPerStudent) {
+            k++;
+            sum = pages[i];
+        } else {
+            sum += pages[i];
+        }
+    }
+    return k;
+}
+
+// allocate the minimum number of pages to k students
+// Or find the minimum value of the maximum pages read by a student
+int allocateMinimumPagesPerStudents(vector<int> pages, int k) {
+	// in case k = 1, the max possible answer is sum of all pages
+	int max = std::accumulate(pages.begin(), pages.end(), 0);
+	int min = std::accumulate(pages.begin(), pages.end(), pages[0], [](int& a, int& b) { return std::max(a, b);});
+
+    int possible = min;
+
+    while (min <= max) {
+        // find mid which is the possible answer
+        int mid = (min + max) / 2;
+
+        auto studentsRequired = findStudentsRequired(pages, mid);
+        cout << studentsRequired << " studentsRequired for " << mid << " pages" << endl;
+        if (studentsRequired == k) {
+            possible = mid;
+            max = mid - 1;
+        } else if (studentsRequired > k) {
+            // increase pages per student
+            min = mid + 1;
+        } else {
+            max = mid - 1;
+        }
+    }
+
+	return possible;
+}

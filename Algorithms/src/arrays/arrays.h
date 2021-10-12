@@ -6,6 +6,17 @@
 
 using namespace std;
 
+// Given an array of numbers of length N, find both the minimum and maximum
+// using less than 2 * (N - 2) comparisons or 2n - 4 comparisons
+// the naive approach (compare each element with the min and max) gives 2(n-1)
+// comparisons (start from arr[1] with min/max set to arr[0])
+
+// Solution
+// Time complexity of comparisons
+// if n is even 1 + 3*(n-2 /2) = 1 + 1.5n -3 = 1.5n - 2
+// if n is odd: 1 + 3*(n-2 /2) + 3 = 1 + 1.5n - 4.5 + 3 =  1.5n + 0.5 ~ 1.5n
+pair<int , int> findMinMax(vector<int> arr);
+
 // find the largest integer. O(n)
 int largest(vector<int> vec);
 
@@ -101,5 +112,9 @@ bool containsSubarrayWithZeroSum(vector<int> vec);
 
 // find the longest subarray with equal number of 0's and 1's with a binary array
 int longestSubarrayWithEqualOnesZeroes(vector<int> vec); 
+
+// Just like std::remove
+// Time O(n), space O(1)
+vector<int>::iterator Remove(vector<int>::iterator begin, vector<int>::iterator end, int match);
 
 #endif

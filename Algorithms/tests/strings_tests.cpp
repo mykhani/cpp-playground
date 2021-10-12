@@ -100,6 +100,24 @@ TEST(Strings, AnagramTest) {
 	EXPECT_EQ(isAnagram(s1, s2), false);
 }
 
+TEST(Strings, AnagramSearchTest) {
+	std::string text{"geeksforgeeks"};
+	std::string pattern{"frog"};
+
+	EXPECT_EQ(anagramSearch(text, pattern), true);
+
+	text = "geeksforgeeks";
+	pattern = "rseek";
+
+	EXPECT_EQ(anagramSearch(text, pattern), false);
+}
+
+TEST(Strings, LexicographicRankTest) {
+	std::string text{"STRING"};
+
+	EXPECT_EQ(lexicographicRank(text), 598);
+}
+
 TEST(Strings, LeftmostRepeatingTest) {
 	std::string s{"geeksforgeeks"};
 	int result = leftMostRepeating(s);
@@ -172,9 +190,49 @@ TEST(Strings, FindPatternRabinCarpTest) {
 	EXPECT_EQ(result, expected);
 }
 
+TEST(Strings, FindPatternKMPTest) {
+	std::string text = "ABABCABABAAD";
+	std::string pattern = "ABABA";
+
+	auto result = findPatternKMP(text, pattern);
+	std::vector<int> expected = {5};
+
+	EXPECT_EQ(result, expected);
+}
+
+TEST(Strings, CheckRotationsTest) {
+	std::string s1 = "ABCD";
+	std::string s2 = "CDAB";
+
+	auto result = checkRotation(s1, s2);
+
+	EXPECT_EQ(result, true);
+
+	s1 = "ABAB";
+	s2 = "ABBA";
+
+	result = checkRotation(s1, s2);
+
+	EXPECT_EQ(result, false);
+}
+
 TEST(Strings, LongestPrefixSuffixTest) {
 	std::string text = "AAACAAAA";
 	int length = longestPrefixSuffix(text);
 
 	EXPECT_EQ(length, 3);
+}
+
+TEST(Strings, LongestDistinctSubstringTest) {
+	std::string s;
+	EXPECT_EQ(longestSubstringWithDistinctChars(s), 0);
+
+	s = "abaacdbab";
+	EXPECT_EQ(longestSubstringWithDistinctChars(s), 4);
+
+	s = "abcdabc";
+	EXPECT_EQ(longestSubstringWithDistinctChars(s), 4);
+
+	s = "aaa";
+	EXPECT_EQ(longestSubstringWithDistinctChars(s), 1);
 }

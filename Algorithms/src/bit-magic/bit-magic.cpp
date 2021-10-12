@@ -278,3 +278,21 @@ int align_pow2(int n, int pow2)
     
     return (n + mask) & ~(mask);
 }
+
+int countLongestSequenceZeroes(int n) {
+    int count = 0;
+    int max = 0;
+
+    while (n > 0) {
+        int bit = 0x1 & n;
+        if (bit) {
+            count = 0;
+        } else {
+            count++;
+        }
+
+        max = std::max(max, count);
+        n >>= 1;
+    }
+    return max;
+}

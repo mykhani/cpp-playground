@@ -95,10 +95,11 @@ struct Huffman {
 	char code;
 
 	Huffman(char c, int f) :
-			code {c}, frequency {f} {
+			code{c}, frequency{f} {
 	}
 };
 
-std::shared_ptr<TreeNode<Huffman>> buildHuffmanTree(std::vector<std::pair<char, int>> frequency);
+std::shared_ptr<TreeNode<Huffman>> buildHuffmanTree(
+		std::vector<std::pair<char, int>> frequency);
 
 #endif /* GREEDY_GREEDY_H_ */

@@ -7,6 +7,13 @@
 
 #include "strings.h"
 #include <climits>
+#include <algorithm>
+#include <unordered_map>
+#include "../recursion/recursion.h"
+
+using namespace std;
+
+#define CHAR 256
 
 std::vector<std::pair<char, int>> frequencyOfCharactersLowercaseString(
 		std::string s) {
@@ -120,6 +127,7 @@ std::vector<int> findPatternDistinct(const std::string& text,
 	return result;
 }
 
+// Time O((n-m+1)*m), space O(1)
 std::vector<int> findPatternNaive(const std::string& text,
 		const std::string& pattern) {
 	std::vector<int> result;
@@ -257,57 +265,231 @@ std::vector<int> findPatternRabinCarp(const std::string& text,
 	// the hash of first pattern length slice acda can be calculated as
 	// h_0 = 5^3 * a + 5^2* c + 5^1 * d + a
 	// To find the rolling hash for character i, we can use this formula
-	// h_i = (h_i-1 - text[i-1]*d^(l-1)) + text[i]*d^(l-1)
+	// h_i = d*(h_i-1 - text[i-1]*d^(l-1)) + text[i+m-1]
 	// e.g for above example
-	// h_1 = h_0 - a * 5^3 + c * 5^3
+	// h_1 = 5^3  * c + 5^2 * d + 5 * a + b = 5(h_0 - 5^3 * a) + b
+	// i.e. first remove the hash of the first element of the previous
+	// window, then multiply by d to shift left and then add the last
+	// item of new window
 
 	std::vector<int> result;
 	int n = text.length();
 	int m = pattern.length();
+	int d = 256; // 8-bit extended ASCII chars
 
 	int patternHash = 0;
+	int textHash = 0;
+
+	int factor = 1;
+	int limit = 101; // modulo to limit the powers of d to a valid range to avoid overflows
+
+	// d^(m-1)
+	for (int i = 1; i <= m - 1; i++) {
+		factor = (factor * d) % limit; // m = 3 => factor = d^2 i.e. 1, d, d^2
+	}
 
 	for (int i = 0; i < m; i++) {
-		patternHash ^= pattern[i];
+		patternHash = (patternHash * d + pattern[i]) % limit;
+		textHash = (textHash * d + text[i]) % limit;
 	}
 
-	int hash = 0;
-
-	for (int i = 0; i < n; i++) {
-		if (i >= m) {
-			// hash now contains items from 0 to m - 1
-			if (hash == patternHash) {
-				int j;
-				for (j = 0; j < m; j++) {
-					if (text[i - m + j] != pattern[j]) {
-						break;
-					}
-				}
-				if (j == m) {
-					result.push_back(i - m);
+	for (int i = 0; i <= n - m; i++) {
+		if (patternHash == textHash) {
+			int j;
+			for (j = 0; j < m; j++) {
+				if (text[i + j] != pattern[j]) {
+					break;
 				}
 			}
-			// remove the left most item
-			hash ^= text[i - m];
-		}
-
-		hash ^= text[i];
-	}
-
-	if (hash == patternHash) {
-		int j;
-		for (j = 0; j < m; j++) {
-			if (text[n - m + j] != pattern[j]) {
-				break;
+			if (j == m) {
+				result.push_back(i);
 			}
 		}
-		if (j == m) {
-			result.push_back(n - m);
+
+		// update hash for next window
+		// if there is not next window then skip
+		// no next window if current window is final,
+		// in this case, i points to the last element
+		// of the previous window or the previous
+		// element of the first element of last window
+		// first element of last window is n - m
+		// so i must be less than n - m
+		if (i < n - m) {
+			textHash = (d * (textHash - factor * text[i]) + text[i + m])
+					% limit;
+
+			if (textHash < 0)
+				textHash += limit; // make negative value positive e.g -3 % 10 == -3 + 10 % 10
 		}
 	}
 
 	return result;
 }
+
+static std::vector<int> createLps(const std::string& s) {
+	int n = s.length();
+	std::vector<int> lps(n, 0);
+
+	int i = 1;
+	int len = 0;
+
+	lps[0] = 0;
+
+	while (i < n) {
+		if (s[i] == s[len]) {
+			len++;
+			lps[i] = len;
+			i++;
+		} else {
+			if (len == 0) {
+				lps[i] = 0;
+				i++;
+			} else {
+				len = lps[len - 1];
+			}
+		}
+	}
+
+	return lps;
+}
+
+std::vector<int> findPatternKMP(const std::string& text,
+		const std::string& pattern) {
+
+	std::vector<int> result; // indices
+
+	int m = pattern.length();
+	int n = text.length();
+	int i = 0;
+	int j = 0;
+
+	std::vector<int> lps = createLps(text);
+
+	while (i < n) {
+		if (text[i] == pattern[j]) {
+			i++;
+			j++;
+
+			if (j == m) {
+				result.push_back(i - j);
+				j = lps[j - 1];
+			}
+		} else {
+			if (j == 0) {
+				i++;
+			} else {
+				j = lps[j - 1];
+			}
+		}
+	}
+
+	return result;
+}
+
+bool checkRotation(const std::string& s1, const std::string& s2) {
+	// find the first matching characters
+	int len1 = s1.length();
+	int len2 = s2.length();
+
+	if (len1 != len2)
+		return false;
+
+	return (s1 + s1).find(s2) != std::string::npos;
+
+// works but need more testing
+//	int first = -1;
+//
+//	for (int i = 0; i < len1; i++) {
+//		if (s1[i] == s2[0]) {
+//			first = i;
+//			break;
+//		}
+//	}
+//
+//	if (first < 0)
+//		return false;
+//
+//	int j;
+//
+//	for (j = 0; j < len1; j++) {
+//		if (s1[(j + first) % len1] != s2[j]) {
+//			break;
+//		}
+//	}
+//
+//	return j == len1;
+}
+
+bool anagramSearch(const std::string& text, const std::string& pattern) {
+	bool lut[256] = {false};
+
+	for (int i = 0; i < pattern.length(); i++) {
+		lut[pattern[i]] = true;
+	}
+
+	int count = 0;
+
+	for (int j = 0; j < text.length(); j++) {
+		if (lut[text[j]]) {
+			count++;
+			if (count == pattern.length()) {
+				break;
+			}
+		} else {
+			count = 0;
+		}
+	}
+
+	return count == pattern.length();
+}
+
+static int factorial(int n) {
+	int result = 1;
+
+	while (n > 0) {
+		result *= n;
+		n--;
+	}
+
+	return result;
+}
+
+int lexicographicRank(const std::string& s) {
+	int count[CHAR]{0};
+	int prefixCount[CHAR]{0};
+	int lowerPermutations = 0;
+	int m = s.length();
+	int factorialComputed = factorial(m);
+
+	for (int i = 0; i < m; i++) {
+		int index = s[i];
+		count[index]++;
+	}
+	// S : 83
+	// T : 84
+	// R : 82
+	// I : 73
+	// N : 78
+	// G : 71
+	// 6 5 4 3 2 1
+	for (int i = 1; i < CHAR; i++) {
+		prefixCount[i] = prefixCount[i - 1] + count[i - 1];
+	}
+
+	for (int i = 0; i < m; i++) {
+		int index = s[i];
+		int lessThan = prefixCount[index];
+		factorialComputed /= m - i;
+		lowerPermutations += (lessThan * factorialComputed);
+		// reduce count
+		for (int j = index + 1; j < CHAR; j++) {
+			prefixCount[j]--;
+		}
+	}
+
+	return lowerPermutations + 1;
+}
+
 /*
  * Longest prefix which is also suffix without any overlap
  * Input : aabcdaabc
@@ -320,30 +502,54 @@ std::vector<int> findPatternRabinCarp(const std::string& text,
 
  * Input : aaaa
  * Output : 2
-*/
+ */
 // Time O(n/2) ~ O(n), space O(1)
 int longestPrefixSuffix(std::string s) {
-	// split the string in the middle, compare left and right parts
+
 	int n = s.length();
+	std::vector<int> lps(n, 0);
 
-	if (n < 2) {
-		return -1; // need at least two chars to be both prefix/suffix
-	}
+	lps[0] = 0;
 
-	int i = n / 2;
-	int len = 0; // length of the prefix/suffix
+	int i = 1;
+	int len = 0;
 
 	while (i < n) {
-		if (s[i] == s[len]) { // left part and right part index matches
+		if (s[i] == s[len]) {
 			len++;
+			lps[i] = len;
 			i++;
+
 		} else {
-			// consider AAACAAAA
-			// mistmach found, reset
-			i = i - len + 1; // reduce the right part
-			len = 0;
+			if (len == 0) {
+				lps[i] = 0;
+				i++;
+			} else {
+				len = lps[len - 1];
+			}
 		}
 	}
 
-	return len;
+	return lps[n - 1];
+}
+
+int longestSubstringWithDistinctChars(const std::string& s) {
+	std::unordered_map<char, int> traversed;
+
+	int maxCount = 0;
+	int begin = 0;
+	int i = 0;
+
+	while (i < s.length()) {
+		char c = s[i];
+		auto found = traversed.find(c);
+		if (found != traversed.end() && found->second >= begin) {
+			begin = found->second + 1;
+		}
+		traversed[c] = i;
+		maxCount = std::max(maxCount, i - begin + 1);
+		i++;
+	}
+
+	return maxCount;
 }

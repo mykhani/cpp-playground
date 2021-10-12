@@ -56,4 +56,3 @@ TEST(Greedy, HuffmanTest) {
 	buildHuffmanTree(f);
 }
 
-

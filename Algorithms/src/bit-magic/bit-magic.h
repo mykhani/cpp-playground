@@ -36,4 +36,8 @@ int align(int n, int alignment);
 // align power of two
 int align_pow2(int n, int pow2);
 
+// count of the longest sequence of zeros in the binary representation of the integer
+// Time O(logn), space O(1)
+int countLongestSequenceZeroes(int n);
+
 #endif

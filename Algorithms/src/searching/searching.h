@@ -75,6 +75,10 @@ int findRepeatingElement(vector<int> vec);
 // Note: if you find minimum for one student, it means some other student
 // might have to read more pages.
 // So the requirement is to minimize the maximum pages read by each student.
-int findMinimumPagesPerKStudents(vector<int> books, int k);
+// allocate the minimum number of pages to k students
+// Or find the minimum value of the maximum pages read by a student
+int findMinimumPagesPerKStudents(vector<int> books, int k); // naive approach
+int allocateMinimumPagesPerStudents(vector<int> pages, int k); // binary-search approach
+
 
 #endif

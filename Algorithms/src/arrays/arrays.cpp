@@ -40,6 +40,46 @@ std::ostream& operator<<(std::ostream& os, std::unordered_map<int, int>& map)
     return os;
 }
 
+// Time complexity of comparisons
+// if n is even 1 + 3*(n-2 /2) = 1 + 1.5n -3 = 1.5n - 2
+// if n is odd: 1 + 3*(n-2 /2) + 3 = 1 + 1.5n - 4.5 + 3 =  1.5n + 0.5 ~ 1.5n
+pair<int , int> findMinMax(vector<int> arr) {
+	int n = arr.size();
+    int min = arr[0];
+    int max = arr[0];
+
+    if (arr[0] < arr[1]) {
+        min = arr[0];
+        max = arr[1];
+    } else {
+        min = arr[1];
+        max = arr[0];
+    }
+
+    // check in pairs, a new pair is either (max, min) or (min, max) or neither
+    // in other words, the greater of the new pair could be a new max or
+    // the smaller of the new pair could be a new minimum or neither of above
+    for (int i = 2; i < n - 2; i += 2) {
+        // total 3 comparisons
+
+        if (arr[i] < arr[i + 1]) { // one comparison
+            max = std::max(max, arr[i + 1]); // one comparison
+            min = std::min(min, arr[i]); // one comparison
+        } else {
+            max = std::max(max, arr[i]); // one comparison
+            min = std::min(max, arr[i+1]); // one comparison
+        }
+    }
+
+    // for odd length arrays
+    if (n % 2) { // one comparison
+        max = std::max(max, arr[n-1]); // one comparison
+        min = std::min(min, arr[n-1]); // one comparison
+    }
+
+    return {min, max};
+}
+
 // find the largest integer
 int largest(vector<int> vec)
 {
@@ -671,4 +711,21 @@ bool containsSubarrayWithZeroSum(vector<int> vec)
 int longestSubarrayWithEqualOnesZeroes(vector<int> vec)
 {
     throw std::runtime_error("Function not implemented");
+}
+
+// remove an element from vector (like std::remove)
+vector<int>::iterator Remove(vector<int>::iterator begin, vector<int>::iterator end, int match) {
+    auto curr = begin;
+    auto unique = begin;
+
+    while (curr != end) {
+        if (*curr != match) {
+            *unique = *curr;
+            unique++;
+        }
+
+        curr++;
+    }
+
+    return unique;
 }
